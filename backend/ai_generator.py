@@ -1,10 +1,16 @@
-import anthropic
-from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import anthropic
+
 
 @dataclass
 class ConversationState:
     """Manages state across multiple tool calling rounds"""
+
     original_query: str
     messages: List[Dict[str, Any]]
     round_count: int = 0
@@ -25,9 +31,10 @@ class ConversationState:
         if context and context not in self.accumulated_context:
             self.accumulated_context.append(context)
 
+
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
-    
+
     # Static system prompt to avoid rebuilding on each call
     SYSTEM_PROMPT = """ You are an AI assistant specialized in course materials and educational content with access to comprehensive search and outline tools for course information.
 
@@ -65,22 +72,21 @@ All responses must be:
 4. **Example-supported** - Include relevant examples when they aid understanding
 Provide only the direct answer to what was asked.
 """
-    
+
     def __init__(self, api_key: str, model: str):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
-        
+
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
-    
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
+
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+    ) -> str:
         """
         Generate AI response with optional sequential tool usage and conversation context.
 
@@ -104,13 +110,15 @@ Provide only the direct answer to what was asked.
         state = ConversationState(
             original_query=query,
             messages=[{"role": "user", "content": query}],
-            system_prompt=initial_system_content
+            system_prompt=initial_system_content,
         )
 
         # Execute conversation rounds
         return self._execute_conversation_rounds(state, tools, tool_manager)
 
-    def _execute_conversation_rounds(self, state: ConversationState, tools: Optional[List], tool_manager) -> str:
+    def _execute_conversation_rounds(
+        self, state: ConversationState, tools: Optional[List], tool_manager
+    ) -> str:
         """
         Execute multiple conversation rounds with tool usage.
 
@@ -142,7 +150,7 @@ Provide only the direct answer to what was asked.
             api_params = {
                 **self.base_params,
                 "messages": state.messages.copy(),
-                "system": enhanced_prompt
+                "system": enhanced_prompt,
             }
 
             # Add tools if available
@@ -163,7 +171,9 @@ Provide only the direct answer to what was asked.
             # Check if Claude used tools
             if response.stop_reason == "tool_use" and tool_manager:
                 # Execute tools and get the follow-up response for this round
-                follow_up_response = self._handle_tool_execution_for_round(response, state, api_params, tool_manager)
+                follow_up_response = self._handle_tool_execution_for_round(
+                    response, state, api_params, tool_manager
+                )
 
                 # Check if we should continue to next round
                 if not self._response_suggests_continuation(follow_up_response):
@@ -175,7 +185,9 @@ Provide only the direct answer to what was asked.
 
                 # Add the final response from this round to continue to next round
                 # (Tool use and results were already added in _handle_tool_execution_for_round)
-                state.messages.append({"role": "assistant", "content": follow_up_response})
+                state.messages.append(
+                    {"role": "assistant", "content": follow_up_response}
+                )
             else:
                 # No tool use - return this response
                 return response.content[0].text
@@ -183,7 +195,13 @@ Provide only the direct answer to what was asked.
         # If we've exhausted all rounds, synthesize final response
         return self._synthesize_final_response(state)
 
-    def _handle_tool_execution_for_round(self, initial_response, state: ConversationState, base_params: Dict[str, Any], tool_manager) -> str:
+    def _handle_tool_execution_for_round(
+        self,
+        initial_response,
+        state: ConversationState,
+        base_params: Dict[str, Any],
+        tool_manager,
+    ) -> str:
         """
         Handle tool execution within a conversation round.
 
@@ -202,29 +220,34 @@ Provide only the direct answer to what was asked.
             if content_block.type == "tool_use":
                 try:
                     tool_result = tool_manager.execute_tool(
-                        content_block.name,
-                        **content_block.input
+                        content_block.name, **content_block.input
                     )
 
                     # Add tool result to state context for future rounds
                     state.add_tool_context(f"{content_block.name}: {tool_result}")
 
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": tool_result
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": tool_result,
+                        }
+                    )
                 except Exception as e:
                     # Handle tool execution errors
                     error_msg = f"Tool execution failed: {str(e)}"
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": error_msg
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": error_msg,
+                        }
+                    )
 
         # Add tool use response and results to state messages
-        state.messages.append({"role": "assistant", "content": initial_response.content})
+        state.messages.append(
+            {"role": "assistant", "content": initial_response.content}
+        )
         if tool_results:
             state.messages.append({"role": "user", "content": tool_results})
 
@@ -232,7 +255,7 @@ Provide only the direct answer to what was asked.
         follow_up_params = {
             **self.base_params,
             "messages": state.messages.copy(),
-            "system": base_params["system"]
+            "system": base_params["system"],
         }
 
         # Get follow-up response
@@ -258,7 +281,7 @@ Provide only the direct answer to what was asked.
             "additional information",
             "more details needed",
             "need to search for more",
-            "search for more specific"
+            "search for more specific",
         ]
 
         response_lower = response.lower()
@@ -283,7 +306,7 @@ Please provide a comprehensive answer to: {state.original_query}"""
         final_params = {
             **self.base_params,
             "messages": [{"role": "user", "content": synthesis_prompt}],
-            "system": "You are an AI assistant. Synthesize the provided information to answer the user's question comprehensively and accurately. Provide only the direct answer without mentioning the synthesis process."
+            "system": "You are an AI assistant. Synthesize the provided information to answer the user's question comprehensively and accurately. Provide only the direct answer without mentioning the synthesis process.",
         }
 
         try:
@@ -293,7 +316,9 @@ Please provide a comprehensive answer to: {state.original_query}"""
             # Fallback if synthesis fails
             return f"Based on my search, here's what I found:\n\n{context_summary}"
 
-    def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager):
+    def _handle_tool_execution(
+        self, initial_response, base_params: Dict[str, Any], tool_manager
+    ):
         """
         Legacy method for backwards compatibility.
         Handle execution of tool calls and get follow-up response (single round only).
@@ -318,23 +343,26 @@ Please provide a comprehensive answer to: {state.original_query}"""
             if content_block.type == "tool_use":
                 try:
                     tool_result = tool_manager.execute_tool(
-                        content_block.name,
-                        **content_block.input
+                        content_block.name, **content_block.input
                     )
 
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": tool_result
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": tool_result,
+                        }
+                    )
                 except Exception as e:
                     # Handle tool execution errors
                     error_msg = f"Tool execution failed: {str(e)}"
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": error_msg
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": error_msg,
+                        }
+                    )
 
         # Add tool results as single message
         if tool_results:
@@ -344,7 +372,7 @@ Please provide a comprehensive answer to: {state.original_query}"""
         final_params = {
             **self.base_params,
             "messages": messages,
-            "system": base_params["system"]
+            "system": base_params["system"],
         }
 
         # Get final response

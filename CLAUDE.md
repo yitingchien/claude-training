@@ -18,11 +18,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Python Package Management
 - **IMPORTANT**: Always use `uv` for all dependency management (never use pip directly)
 - Add dependencies: `uv add package_name`
+- Add dev dependencies: `uv add package_name --group dev`
 - Remove dependencies: `uv remove package_name`
 - Install/sync dependencies: `uv sync`
 - Run Python files: `uv run python script.py` (always use `uv run`, never `python` directly)
 - Dependencies defined in `pyproject.toml`
 - Lock file is `uv.lock`
+
+### Code Quality Tools
+- **Format code**: `./scripts/format-code.sh` or `uv run black . && uv run isort .`
+- **Check quality**: `./scripts/quality-check.sh` (runs all quality checks)
+- **Individual tools**:
+  - Black formatting: `uv run black .` (format) or `uv run black --check .` (check only)
+  - Import sorting: `uv run isort .` (format) or `uv run isort --check-only .` (check only)
+  - Linting: `uv run flake8 .`
+  - Type checking: `uv run mypy backend/ main.py`
+- **IMPORTANT**: Always run quality checks before committing code
 
 ## Architecture Overview
 
