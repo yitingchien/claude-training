@@ -7,7 +7,9 @@
       "Bash(git merge:*)",
       "Bash(./scripts/quality-check.sh:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git worktree:*)",
+      "Bash(git worktree remove:*)"
     ],
     "deny": [],
     "ask": []
