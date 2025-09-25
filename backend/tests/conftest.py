@@ -5,12 +5,14 @@ import pytest
 import json
 import tempfile
 import os
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, AsyncMock
 from typing import Dict, List, Any
 
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from models import Course, Lesson, CourseChunk
 from vector_store import SearchResults
 from config import Config
@@ -237,4 +239,164 @@ def mock_session_manager():
     mock_manager = Mock()
     mock_manager.get_conversation_history.return_value = "User: Previous question\nAssistant: Previous answer"
     mock_manager.add_exchange.return_value = None
+    mock_manager.create_session.return_value = "test-session-123"
+    mock_manager.clear_session.return_value = None
     return mock_manager
+
+
+@pytest.fixture
+def mock_rag_system():
+    """Mock RAGSystem for API testing"""
+    mock_rag = Mock()
+    mock_rag.query.return_value = (
+        "This is a test answer about machine learning.",
+        ["Test Course - Lesson 1", "Test Course - Lesson 2"],
+        ["https://example.com/lesson-1", "https://example.com/lesson-2"]
+    )
+    mock_rag.get_course_analytics.return_value = {
+        "total_courses": 2,
+        "course_titles": ["Introduction to Machine Learning", "Advanced Python Programming"]
+    }
+
+    # Add session manager to mock rag system
+    mock_session_manager_instance = Mock()
+    mock_session_manager_instance.create_session.return_value = "test-session-456"
+    mock_session_manager_instance.clear_session.return_value = None
+    mock_rag.session_manager = mock_session_manager_instance
+
+    return mock_rag
+
+
+@pytest.fixture
+def test_app(mock_rag_system):
+    """FastAPI test application with mocked dependencies"""
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel
+    from typing import List, Optional
+
+    # Create test app without static file mounting to avoid import issues
+    app = FastAPI(title="Test Course Materials RAG System")
+
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Define request/response models locally
+    class QueryRequest(BaseModel):
+        query: str
+        session_id: Optional[str] = None
+
+    class QueryResponse(BaseModel):
+        answer: str
+        sources: List[str]
+        source_links: List[Optional[str]]
+        session_id: str
+
+    class CourseStats(BaseModel):
+        total_courses: int
+        course_titles: List[str]
+
+    class NewSessionResponse(BaseModel):
+        session_id: str
+        message: str
+
+    class ClearSessionResponse(BaseModel):
+        success: bool
+        message: str
+
+    # Define API endpoints inline
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        try:
+            session_id = request.session_id
+            if not session_id:
+                session_id = mock_rag_system.session_manager.create_session()
+
+            answer, sources, source_links = mock_rag_system.query(request.query, session_id)
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                source_links=source_links,
+                session_id=session_id
+            )
+        except Exception as e:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        try:
+            analytics = mock_rag_system.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/sessions/new", response_model=NewSessionResponse)
+    async def create_new_session():
+        try:
+            session_id = mock_rag_system.session_manager.create_session()
+            return NewSessionResponse(
+                session_id=session_id,
+                message="New session created successfully"
+            )
+        except Exception as e:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.delete("/api/sessions/{session_id}/clear", response_model=ClearSessionResponse)
+    async def clear_session(session_id: str):
+        try:
+            mock_rag_system.session_manager.clear_session(session_id)
+            return ClearSessionResponse(
+                success=True,
+                message=f"Session {session_id} cleared successfully"
+            )
+        except Exception as e:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return app
+
+
+@pytest.fixture
+def test_client(test_app):
+    """FastAPI test client"""
+    return TestClient(test_app)
+
+
+@pytest.fixture
+def api_test_data():
+    """Common test data for API tests"""
+    return {
+        "valid_query": {
+            "query": "What is machine learning?",
+            "session_id": "test-session-123"
+        },
+        "query_without_session": {
+            "query": "Explain supervised learning"
+        },
+        "invalid_query": {
+            "invalid_field": "This should fail validation"
+        },
+        "expected_response": {
+            "answer": "This is a test answer about machine learning.",
+            "sources": ["Test Course - Lesson 1", "Test Course - Lesson 2"],
+            "source_links": ["https://example.com/lesson-1", "https://example.com/lesson-2"],
+            "session_id": "test-session-123"
+        },
+        "expected_courses": {
+            "total_courses": 2,
+            "course_titles": ["Introduction to Machine Learning", "Advanced Python Programming"]
+        }
+    }
