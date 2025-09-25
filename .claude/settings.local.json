@@ -5,7 +5,8 @@
       "Bash(uv sync:*)",
       "Bash(uv run:*)",
       "Bash(git merge:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
