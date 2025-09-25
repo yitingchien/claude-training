@@ -3,7 +3,9 @@
     "allow": [
       "Read(//Users/yiting.chien/Desktop/**)",
       "Bash(uv sync:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
