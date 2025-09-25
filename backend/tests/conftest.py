@@ -1,21 +1,22 @@
 """
 Pytest configuration and fixtures for RAG system testing
 """
-import pytest
-import json
-import tempfile
+
 import os
+import sys
+import tempfile
 from unittest.mock import Mock, MagicMock, AsyncMock
 from typing import Dict, List, Any
 
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from config import Config
 from models import Course, Lesson, CourseChunk
 from vector_store import SearchResults
-from config import Config
 
 
 @pytest.fixture
@@ -29,19 +30,19 @@ def sample_course():
             Lesson(
                 lesson_number=1,
                 title="What is Machine Learning?",
-                lesson_link="https://example.com/ml-course/lesson-1"
+                lesson_link="https://example.com/ml-course/lesson-1",
             ),
             Lesson(
                 lesson_number=2,
                 title="Types of Machine Learning",
-                lesson_link="https://example.com/ml-course/lesson-2"
+                lesson_link="https://example.com/ml-course/lesson-2",
             ),
             Lesson(
                 lesson_number=3,
                 title="Linear Regression",
-                lesson_link="https://example.com/ml-course/lesson-3"
-            )
-        ]
+                lesson_link="https://example.com/ml-course/lesson-3",
+            ),
+        ],
     )
 
 
@@ -56,14 +57,14 @@ def another_sample_course():
             Lesson(
                 lesson_number=1,
                 title="Object-Oriented Programming",
-                lesson_link="https://example.com/python-course/lesson-1"
+                lesson_link="https://example.com/python-course/lesson-1",
             ),
             Lesson(
                 lesson_number=2,
                 title="Decorators and Context Managers",
-                lesson_link="https://example.com/python-course/lesson-2"
-            )
-        ]
+                lesson_link="https://example.com/python-course/lesson-2",
+            ),
+        ],
     )
 
 
@@ -75,20 +76,20 @@ def sample_course_chunks(sample_course):
             content="Machine learning is a subset of artificial intelligence that focuses on algorithms that can learn from data.",
             course_title=sample_course.title,
             lesson_number=1,
-            chunk_index=0
+            chunk_index=0,
         ),
         CourseChunk(
             content="Supervised learning involves training models with labeled data to make predictions on new, unseen data.",
             course_title=sample_course.title,
             lesson_number=1,
-            chunk_index=1
+            chunk_index=1,
         ),
         CourseChunk(
             content="Linear regression is a fundamental supervised learning technique used for predicting continuous values.",
             course_title=sample_course.title,
             lesson_number=3,
-            chunk_index=2
-        )
+            chunk_index=2,
+        ),
     ]
 
 
@@ -140,11 +141,18 @@ def mock_anthropic_client_with_tool_use():
 
     # Mock final response after tool execution
     mock_final_response = Mock()
-    mock_final_response.content = [Mock(text="Machine learning is a subset of AI that focuses on learning from data.")]
+    mock_final_response.content = [
+        Mock(
+            text="Machine learning is a subset of AI that focuses on learning from data."
+        )
+    ]
     mock_final_response.stop_reason = "end_turn"
 
     # Configure the client to return different responses on consecutive calls
-    mock_client.messages.create.side_effect = [mock_initial_response, mock_final_response]
+    mock_client.messages.create.side_effect = [
+        mock_initial_response,
+        mock_final_response,
+    ]
 
     return mock_client
 
@@ -155,32 +163,28 @@ def search_results_with_data():
     return SearchResults(
         documents=[
             "Machine learning is a subset of artificial intelligence.",
-            "Supervised learning uses labeled data for training."
+            "Supervised learning uses labeled data for training.",
         ],
         metadata=[
             {
                 "course_title": "Introduction to Machine Learning",
                 "lesson_number": 1,
-                "chunk_index": 0
+                "chunk_index": 0,
             },
             {
                 "course_title": "Introduction to Machine Learning",
                 "lesson_number": 1,
-                "chunk_index": 1
-            }
+                "chunk_index": 1,
+            },
         ],
-        distances=[0.1, 0.2]
+        distances=[0.1, 0.2],
     )
 
 
 @pytest.fixture
 def empty_search_results():
     """Empty SearchResults for testing no-match scenarios"""
-    return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[]
-    )
+    return SearchResults(documents=[], metadata=[], distances=[])
 
 
 @pytest.fixture
@@ -218,11 +222,9 @@ def mock_tool_manager():
             "description": "Search course materials",
             "input_schema": {
                 "type": "object",
-                "properties": {
-                    "query": {"type": "string"}
-                },
-                "required": ["query"]
-            }
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
+            },
         }
     ]
     mock_manager.execute_tool.return_value = "Mock search results"
@@ -237,7 +239,9 @@ def mock_tool_manager():
 def mock_session_manager():
     """Mock SessionManager for testing session handling"""
     mock_manager = Mock()
-    mock_manager.get_conversation_history.return_value = "User: Previous question\nAssistant: Previous answer"
+    mock_manager.get_conversation_history.return_value = (
+        "User: Previous question\nAssistant: Previous answer"
+    )
     mock_manager.add_exchange.return_value = None
     mock_manager.create_session.return_value = "test-session-123"
     mock_manager.clear_session.return_value = None
