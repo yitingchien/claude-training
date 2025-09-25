@@ -1,0 +1,63 @@
+[
+    {
+        "title": "Introduction to Machine Learning",
+        "course_link": "https://example.com/ml-course",
+        "instructor": "Dr. Jane Smith",
+        "lessons": [
+            {
+                "lesson_number": 1,
+                "title": "What is Machine Learning?",
+                "lesson_link": "https://example.com/ml-course/lesson-1"
+            },
+            {
+                "lesson_number": 2,
+                "title": "Types of Machine Learning",
+                "lesson_link": "https://example.com/ml-course/lesson-2"
+            },
+            {
+                "lesson_number": 3,
+                "title": "Linear Regression",
+                "lesson_link": "https://example.com/ml-course/lesson-3"
+            }
+        ]
+    },
+    {
+        "title": "Advanced Python Programming",
+        "course_link": "https://example.com/python-course",
+        "instructor": "Prof. John Doe",
+        "lessons": [
+            {
+                "lesson_number": 1,
+                "title": "Object-Oriented Programming",
+                "lesson_link": "https://example.com/python-course/lesson-1"
+            },
+            {
+                "lesson_number": 2,
+                "title": "Decorators and Context Managers",
+                "lesson_link": "https://example.com/python-course/lesson-2"
+            }
+        ]
+    },
+    {
+        "title": "Model Context Protocol (MCP)",
+        "course_link": "https://example.com/mcp-course",
+        "instructor": "Dr. AI Expert",
+        "lessons": [
+            {
+                "lesson_number": 1,
+                "title": "Introduction to MCP",
+                "lesson_link": "https://example.com/mcp-course/lesson-1"
+            },
+            {
+                "lesson_number": 2,
+                "title": "Building MCP Servers",
+                "lesson_link": "https://example.com/mcp-course/lesson-2"
+            },
+            {
+                "lesson_number": 3,
+                "title": "MCP Client Integration",
+                "lesson_link": "https://example.com/mcp-course/lesson-3"
+            }
+        ]
+    }
+]

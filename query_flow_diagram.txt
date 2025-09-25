@@ -1,0 +1,117 @@
+RAG CHATBOT QUERY FLOW DIAGRAM
+=====================================
+
+USER INTERACTION
+┌─────────────────┐
+│   User Input    │
+│ "What is X?"    │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND                                 │
+│                 (script.js)                                 │
+│                                                             │
+│  1. sendMessage() triggered                                 │
+│  2. Disable input & show loading                           │
+│  3. POST /api/query                                         │
+│     {                                                       │
+│       "query": "What is X?",                              │
+│       "session_id": "abc123"                               │
+│     }                                                       │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ HTTP Request
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   BACKEND API                               │
+│                   (app.py)                                  │
+│                                                             │
+│  4. query_documents() endpoint                              │
+│  5. Validate QueryRequest model                            │
+│  6. Create session if needed                               │
+│  7. Call rag_system.query()                                │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  RAG SYSTEM                                 │
+│                (rag_system.py)                              │
+│                                                             │
+│  8. Get conversation history from session_manager          │
+│  9. Create prompt: "Answer this question about             │
+│     course materials: What is X?"                          │
+│ 10. Call ai_generator.generate_response()                  │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 AI GENERATOR                                │
+│               (ai_generator.py)                             │
+│                                                             │
+│ 11. Send to Claude API with tools                          │
+│ 12. Claude decides: Need search?                           │
+│                                                             │
+│     ┌─────────────┐              ┌─────────────┐           │
+│     │    YES      │              │     NO      │           │
+│     │ Use Search  │              │ Direct      │           │
+│     │ Tool        │              │ Response    │           │
+│     └──────┬──────┘              └──────┬──────┘           │
+│            │                            │                  │
+│            ▼                            │                  │
+│ ┌─────────────────────┐                 │                  │
+│ │   TOOL EXECUTION    │                 │                  │
+│ │                     │                 │                  │
+│ │ 13. Execute search  │                 │                  │
+│ │     in vector_store │                 │                  │
+│ │ 14. Get results     │                 │                  │
+│ │ 15. Second API call │                 │                  │
+│ │     with results    │                 │                  │
+│ └─────────┬───────────┘                 │                  │
+│           │                             │                  │
+│           └─────────────┬───────────────┘                  │
+│                         │                                  │
+│ 16. Return final response                                   │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                RESPONSE FLOW                                │
+│                                                             │
+│ 17. rag_system updates session history                     │
+│ 18. Returns (response, sources) to app.py                  │
+│ 19. app.py creates QueryResponse JSON                      │
+│ 20. HTTP response sent to frontend                         │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ HTTP Response
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 FRONTEND DISPLAY                            │
+│                                                             │
+│ 21. Remove loading animation                                │
+│ 22. Convert markdown to HTML                               │
+│ 23. Display AI response                                     │
+│ 24. Show sources (if any)                                  │
+│ 25. Re-enable input                                         │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────┐
+│  User sees      │
+│  response       │
+└─────────────────┘
+
+KEY COMPONENTS:
+===============
+• session_manager: Tracks conversation history
+• vector_store: ChromaDB for semantic search
+• tool_manager: Handles search tool execution
+• document_processor: Processes course documents
+• search_tools: Semantic search functionality
+
+DATA FLOW:
+==========
+User Query → Frontend → FastAPI → RAG System → AI Generator → Claude API
+                                        ↓
+                                   Tool Manager → Vector Store (if needed)
+                                        ↓
+Claude Response ← AI Generator ← RAG System ← FastAPI ← Frontend ← User

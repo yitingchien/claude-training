@@ -1,0 +1,62 @@
+[
+    {
+        "content": "Machine learning is a subset of artificial intelligence (AI) that focuses on the development of algorithms and statistical models that enable computer systems to improve their performance on a specific task through experience without being explicitly programmed.",
+        "course_title": "Introduction to Machine Learning",
+        "lesson_number": 1,
+        "chunk_index": 0
+    },
+    {
+        "content": "Supervised learning is one of the main types of machine learning where algorithms learn from labeled training data to make predictions or decisions on new, unseen data. Examples include classification and regression problems.",
+        "course_title": "Introduction to Machine Learning",
+        "lesson_number": 2,
+        "chunk_index": 1
+    },
+    {
+        "content": "Unsupervised learning involves finding hidden patterns or structures in data without labeled examples. Common techniques include clustering, dimensionality reduction, and association rule learning.",
+        "course_title": "Introduction to Machine Learning",
+        "lesson_number": 2,
+        "chunk_index": 2
+    },
+    {
+        "content": "Linear regression is a fundamental supervised learning technique used for predicting continuous numerical values. It assumes a linear relationship between input features and the target variable.",
+        "course_title": "Introduction to Machine Learning",
+        "lesson_number": 3,
+        "chunk_index": 3
+    },
+    {
+        "content": "Object-oriented programming (OOP) is a programming paradigm based on the concept of objects, which can contain data (attributes) and code (methods). Python supports OOP through classes and objects.",
+        "course_title": "Advanced Python Programming",
+        "lesson_number": 1,
+        "chunk_index": 4
+    },
+    {
+        "content": "Decorators in Python are a powerful feature that allows you to modify or extend the behavior of functions or classes without permanently modifying their code. They use the @decorator syntax.",
+        "course_title": "Advanced Python Programming",
+        "lesson_number": 2,
+        "chunk_index": 5
+    },
+    {
+        "content": "Context managers in Python provide a way to allocate and release resources precisely when you want to. The most common use is with the 'with' statement for file operations.",
+        "course_title": "Advanced Python Programming",
+        "lesson_number": 2,
+        "chunk_index": 6
+    },
+    {
+        "content": "The Model Context Protocol (MCP) is an open standard that enables secure connections between host applications and external data sources and tools. It provides a universal, open standard for connecting AI assistants to the systems where data lives.",
+        "course_title": "Model Context Protocol (MCP)",
+        "lesson_number": 1,
+        "chunk_index": 7
+    },
+    {
+        "content": "MCP servers act as intermediaries that securely expose data and functionality to AI models. They implement specific interfaces and protocols to ensure safe and controlled access to external resources.",
+        "course_title": "Model Context Protocol (MCP)",
+        "lesson_number": 2,
+        "chunk_index": 8
+    },
+    {
+        "content": "MCP clients are applications that can connect to and interact with MCP servers. They handle the protocol communication and provide interfaces for AI models to access external capabilities through the MCP standard.",
+        "course_title": "Model Context Protocol (MCP)",
+        "lesson_number": 3,
+        "chunk_index": 9
+    }
+]
