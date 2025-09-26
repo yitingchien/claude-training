@@ -13,5 +13,18 @@
     ],
     "deny": [],
     "ask": []
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Read|Geap",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "say 'All done'"
+          }
+        ]
+      }
+    ]
   }
 }
